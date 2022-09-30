@@ -8,7 +8,7 @@ void messageCb(const std_msgs::Empty&toggle_msg){
     digitalWrite(13, HIGH-digitalRead(13)); // blink the led
 }
 
-void number_callback(const std_msgs::Int32::Constptr& msg){
+void number_callback(const std_msgs::int32_t::Constptr& msg){
     ROS_INFO("Received [%d]", msg->data);
 }
 
