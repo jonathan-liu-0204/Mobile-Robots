@@ -5,7 +5,7 @@
 int main(int argc, char **argv){
     ros::init(argc, argv, “demo_topic_publisher”);
     ros::NodeHandle node_obj;
-    ros::Publisher number_publisher = node_obj.advertise<std_msgs::Int32>(“initial_num”, 10);
+    ros::Publisher number_publisher = node_obj.advertise<std_msgs::Int32>("initial_num", 10);
     ros::Rate loop_rate(10);
     int number_count = 0; 
     
