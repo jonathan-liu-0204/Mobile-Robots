@@ -7,9 +7,9 @@ void number_callback(const std_msgs::Int32::Constptr& msg){
 }
 
 int main(int argc, char **argv){
-    ros::init(argc, argv, “demo_topic_publisher”);
+    ros::init(argc, argv, “answer shower”);
     ros::NodeHandle node_obj;
-    ros::Subscriber number_subscriber = node_obj.subscribe("new_num", 10, number_callback);
+    ros::Subscriber number_subscriber = node_obj.subscribe("result", 10, number_callback);
     ros::spin();
     return 0;
 }
