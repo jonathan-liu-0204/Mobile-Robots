@@ -30,28 +30,3 @@ void loop(){
     result.publish(&answer)
     nh.spinOnce();
 }
-
-// ros::Subscriber<std_msgs::Empty> sub("initial_num", &number_callback);
-
-// std_msgs::Int32 num_result;
-// ros::Publisher chatter("new_num", &num_result);
-// // char hello[13] = "hello world";
-
-// void setup(){
-//     nh.initNode();
-//     nh.advertise(new_num);
-     
-//     pinMode(13, OUTPUT);
-//     nh.subscribe(sub);
-// }
-
-// void loop(){
-//     nh.spinOnce();
-//     delay(1);
-
-//     num_result.data = msg.data;
-//     num_result.data = num_result.data * 2;
-//     chatter.publish(&num_result);
-//     nh.spinOnce();
-//     delay(500);
-// }
