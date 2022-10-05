@@ -9,11 +9,13 @@ ros::NodeHandle nh;
 // }
 
 std_msgs::Int32 answer;
-//
+int receive = 0;
+
 void number_callback(const std_msgs::Int32 & msg){
     int cal = msg.data;
     cal = cal * 2;
     answer.data = cal;
+    receive = 1;
 }
 
 ros::Subscriber<std_msgs::Int32> sub("initial_num", number_callback);
@@ -28,7 +30,16 @@ void setup(){
 }
 
 void loop(){
-  
-    result.publish(&answer);
-    nh.spinOnce();
+
+    if(receive == 1){
+      result.publish(&answer);
+      receive = 0;
+    }
+    else{
+      nh.spinOnce();
+    }
+    
+    //nh.spinOnce();
+    //delay(1000);
+//    result.publish(&answer);
 }
