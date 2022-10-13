@@ -3,7 +3,7 @@
 #include "std_msgs/Int32.h"
 #include <iostream>
 
-int  answer;
+int answer;
 int received = 0;
 
 void number_callback(const std_msgs::Int32 & msg2){
@@ -24,36 +24,27 @@ int main(int argc, char **argv){
     std::cin >> inputNum;
 
     if(inputNum > 0){
-	msg.data = inputNum;
-	number_publisher.publish(msg);
+        msg.data = inputNum;
+        number_publisher.publish(msg);
     }
 
     while (ros::ok()){
-	
-	if(received == 1){
+        if(received == 1){
             std::cout << "message from Arduino is " << answer << std::endl;
-	    received = 0;
+            received = 0;
 
-	    int inputNum = -1;
-            std_msgs::Int32 msg;
+            int inputNum = -1;
+                std_msgs::Int32 msg;
 
-            std::cout << "user's input is ";
-            std::cin >> inputNum;
+                std::cout << "user's input is ";
+                std::cin >> inputNum;
 
-  	    if(inputNum >= 0){
+            if(inputNum >= 0){
                 msg.data = inputNum;
                 number_publisher.publish(msg);
-	    }
-	}
-
-//	if(received == 1){
-//	    std::cout << "message from Arduino is " << answer;
-//	    received = 0;
-//	}
-
+            }
+        }
         ros::spinOnce();
-        // sleep(1);
-        // ++number_count;
     }
     return 0;
 }
