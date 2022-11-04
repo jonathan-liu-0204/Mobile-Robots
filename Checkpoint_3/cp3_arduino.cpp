@@ -4,44 +4,26 @@
 #include <std_msgs/Empty.h>
 #include <PID_v1.h>
 
+#define L298N_IN1   9
+#define L298N_IN2   8
+#define L298N_IN3   11
+#define L298N_IN4   10
+
+#define left_touch_pin 3
+#define right_touch_pin 2
+#define under_touch_pin 4
+#define light_sensor_pin A0 //A0 
 
 double val_output_L = 0; //Power supplied to the motor PWM value.
 double val_output_R = 0; //Power supplied to the motor PWM value.
 
 ros::NodeHandle nh;
 
-std_msgs::Int32 answer_left;
-int receive_left = 0;
+std_msgs::Int32 left_pwm;
+std_msgs::Int32 right_pwm;
 
-void number_callback_left(const std_msgs::Int32 & msg_l){
-    answer_left.data = msg_l.data;
-    receive_left = 1;
-}
-
-std_msgs::Int32 answer_right;
-int receive_right = 0;
-
-void number_callback_right(const std_msgs::Int32 & msg_r){
-    answer_right.data = msg_r.data;
-    receive_right = 1;
-}
-
-ros::Subscriber<std_msgs::Int32> sub_left("left", number_callback_left);
-ros::Publisher result_left("left_back", &answer_left);
-
-ros::Subscriber<std_msgs::Int32> sub_right("right", number_callback_right);
-ros::Publisher result_right("right_back", &answer_right);
-
-
-#define L298N_IN1   9
-#define L298N_IN2   8
-#define L298N_IN3   11
-#define L298N_IN4   10
-
-const byte encoder0pinA_R = 2;
-const byte encoder0pinB_R = 4;
-const byte encoder0pinA_L = 12;
-const byte encoder0pinB_L = 9;
+ros::Publisher result_left("left_back", &left_pwm);
+ros::Publisher result_right("right_back", &right_pwm);
 
 int E_left = 6; //The enabling of L298PDC motor driver board connection to the digital interface port 5
 int E_right = 5;
@@ -62,17 +44,18 @@ double Setpoint_L;
 double Setpoint_R;
 
 void setup(){
-
-   Serial.begin(9600);//Initialize the serial port
+   Serial.begin(19200);//Initialize the serial port
 
    pinMode(L298N_IN1, OUTPUT);         
    pinMode(L298N_IN2, OUTPUT);     
    pinMode(L298N_IN3, OUTPUT);     
    pinMode(L298N_IN4, OUTPUT); 
    
-   pinMode(E_left, OUTPUT);
-   pinMode(E_right, OUTPUT);
-   
+   pinMode(left_touch_pin, INPUT);
+   pinMode(right_touch_pin, INPUT);
+   pinMode(under_touch_pin, INPUT);
+   pinMode(light_sensor_pin, INPUT);
+
    Setpoint_L =80;  //Set the output value of the PID
    Setpoint_R =80;  
    
@@ -81,74 +64,10 @@ void setup(){
    digitalWrite(L298N_IN3, LOW);      
    digitalWrite(L298N_IN4, LOW); 
    
-   EncoderInit();//Initialize the module
-
    nh.initNode();
-    
-   nh.subscribe(sub_left);
-    
    nh.advertise(result_left);
-
-   nh.subscribe(sub_right);
-
    nh.advertise(result_right);
 }
-
-void EncoderInit(){
-
-  Direction_L = true;//default -> Forward  
-  Direction_R = true;//default -> Forward
-
-  pinMode(encoder0pinB_L,INPUT);
-  attachInterrupt(1, wheelSpeed_L, CHANGE);
-  
-  pinMode(encoder0pinB_R,INPUT);
-  attachInterrupt(0, wheelSpeed_R, CHANGE);
-}
-
-void wheelSpeed_L(){
-
-  int Lstate_L = digitalRead(encoder0pinA_L);
-  
-  if((encoder0PinALast_L == LOW) && Lstate_L==HIGH){
-    
-    int val_L = digitalRead(encoder0pinB_L);
-    
-    if(val_L == LOW && Direction_L){
-      Direction_L = false; //Reverse
-    }
-    else if(val_L == HIGH && !Direction_L){
-      Direction_L = true;  //Forward
-    }
-  }
-  encoder0PinALast_L = Lstate_L;
-
-  if(!Direction_L)  duration_L++;
-  else  duration_L--;
-}
-
-void wheelSpeed_R(){
-  
-  int Lstate_R = digitalRead(encoder0pinA_R);
-  
-  if((encoder0PinALast_R == LOW) && Lstate_R==HIGH){
-    
-    int val_R = digitalRead(encoder0pinB_R);
-    
-    if(val_R == LOW && Direction_R){
-      Direction_R = false; //Reverse
-    }
-    else if(val_R == HIGH && !Direction_R){
-      Direction_R = true;  //Forward
-    }
-  }
-  encoder0PinALast_R = Lstate_R;
-
-  if(Direction_R)  duration_R++;
-  else  duration_R--;
-}
-
-
 
 void Forward(){
      digitalWrite(L298N_IN1, HIGH);       
@@ -228,49 +147,86 @@ void Left_negative_0(){
      analogWrite(E_right, 0);
 }
 
+void bumped(){
+    int count = 0;
+    
+    while(count < 2){
+      val_output_L = -100;
+      val_output_R = -100;
+      Backward();
+      delay(1);
+      count++;
+    }  
+}
+
+
+int caught = 0;
+int situation = 0;
 
 void loop(){
+    Serial.begin(19200);
+    
+    int touch_left = digitalRead(left_touch_pin);
+    int touch_right = digitalRead(right_touch_pin);
+    int touch_under = digitalRead(under_touch_pin);
+    int light_sensor = analogRead(light_sensor_pin);
 
-      if(receive_left == 1 && receive_right == 1){
-        result_left.publish(&answer_left);
-        result_right.publish(&answer_right);
-  
-        receive_left = 0;
-        receive_right = 0;
+    if(touch_left == LOW && touch_right == LOW){
+        situation = 1;
+    }
+    else if(light_sensor < 400){
+        situation = 3;
+    }
+    else if(touch_under == LOW){
+        situation = 4;
+    }
+    else if(situation != 2 && caught == 0){
+        situation = 0;
+    }
+    else if(caught == 1){
+        situation = 4;
+    }
 
-        val_output_L = answer_left.data;
-        val_output_R = answer_right.data;
-      }
-      else{
-        
-        if((val_output_L > 0) && (val_output_R > 0)){
-          Forward();
-        }
-        else if((val_output_L < 0) && (val_output_R < 0)){
-          Backward();
-        }
-        else if((val_output_L > 0) && (val_output_R < 0)){
-          Right();
-        }
-        else if((val_output_L < 0) && (val_output_R > 0)){
-          Left();
-        }
-        else if((val_output_L == 0) && (val_output_R == 0)){
-          Stop();
-        }
-        else if((val_output_L == 0) && (val_output_R > 0)){
-          Left_0_positive();
-        }
-        else if((val_output_L == 0) && (val_output_R < 0)){
-          Right_0_negative();
-        }
-        else if((val_output_L > 0) && (val_output_R == 0)){
-          Right_positive_0();
-        }
-        else if((val_output_L < 0) && (val_output_R == 0)){
-          Left_negative_0();
-        }
-        
-        nh.spinOnce();
-      }
+    switch(situation){
+
+      // nothing happened
+      case 0:
+        val_output_L = 100;
+        val_output_R = 100;
+        Forward();
+        break;
+
+      //hit the wall, go back
+      case 1:
+        val_output_L = -100;
+        val_output_R = -100;
+        Backward();
+        delay(2000);
+        situation = 2;
+        break;
+
+      //just went backward from the wall, find the target
+      case 2:
+        val_output_L = -60;
+        val_output_R = 60;
+        Left();
+        break;
+
+      //there's the target !! RUSH!!!
+      case 3:
+        val_output_L = 100;
+        val_output_R = 100;
+        Forward();
+        break;
+
+      //Caught the target, stop
+      case 4:
+        val_output_L = 0;
+        val_output_R = 0;
+        Stop();
+        caught = 1;
+        break;
+    }
+
+    nh.spinOnce();
 }
