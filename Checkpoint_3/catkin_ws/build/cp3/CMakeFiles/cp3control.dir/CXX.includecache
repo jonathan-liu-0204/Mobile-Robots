@@ -13,8 +13,6 @@ std_msgs/Int32.h
 /home/team6/catkin_ws/src/cp3/src/std_msgs/Int32.h
 iostream
 -
-wiringPi.h
-/home/team6/catkin_ws/src/cp3/src/wiringPi.h
 
 /opt/ros/melodic/include/ros/advertise_options.h
 ros/forwards.h

@@ -19,11 +19,18 @@ double val_output_R = 0; //Power supplied to the motor PWM value.
 
 ros::NodeHandle nh;
 
-std_msgs::Int32 left_pwm;
-std_msgs::Int32 right_pwm;
+//int command_value = 99;
+//int received_command = 0;
+//
+//void number_callback_command(const std_msgs::Int32 & msg2){
+//    command_value = msg2.data;
+//    received_command = 1;
+//}
 
-ros::Publisher result_left("left_back", &left_pwm);
-ros::Publisher result_right("right_back", &right_pwm);
+std_msgs::Int32 light_value;
+
+// ros::Subscriber<std_msgs::Int32> command_subscriber("command_num", number_callback_command);
+ros::Publisher light_publisher("light_value", &light_value);
 
 int E_left = 6; //The enabling of L298PDC motor driver board connection to the digital interface port 5
 int E_right = 5;
@@ -44,7 +51,7 @@ double Setpoint_L;
 double Setpoint_R;
 
 void setup(){
-   Serial.begin(19200);//Initialize the serial port
+   //Serial.begin(9600);//Initialize the serial port
 
    pinMode(L298N_IN1, OUTPUT);         
    pinMode(L298N_IN2, OUTPUT);     
@@ -65,8 +72,8 @@ void setup(){
    digitalWrite(L298N_IN4, LOW); 
    
    nh.initNode();
-   nh.advertise(result_left);
-   nh.advertise(result_right);
+   //nh.subscribe(command_subscriber);
+   nh.advertise(light_publisher);
 }
 
 void Forward(){
@@ -151,8 +158,8 @@ void bumped(){
     int count = 0;
     
     while(count < 2){
-      val_output_L = -100;
-      val_output_R = -100;
+      val_output_L = -120;
+      val_output_R = -120;
       Backward();
       delay(1);
       count++;
@@ -162,26 +169,37 @@ void bumped(){
 
 int caught = 0;
 int situation = 0;
+int count = 1;
+
 
 void loop(){
-    Serial.begin(19200);
-    
+    //Serial.begin(19200);
+
     int touch_left = digitalRead(left_touch_pin);
     int touch_right = digitalRead(right_touch_pin);
     int touch_under = digitalRead(under_touch_pin);
     int light_sensor = analogRead(light_sensor_pin);
 
-    if(touch_left == LOW && touch_right == LOW){
+
+//    Serial.print("touch_left: ");
+//    Serial.println(touch_left);
+//    Serial.print("touch_right: ");
+//    Serial.println(touch_right);
+//    Serial.print("touch_under: ");
+//    Serial.println(touch_under);
+//    Serial.print("light_sensor: ");
+//    Serial.println(light_sensor);
+//
+//    delay(5)
+
+    if((touch_left == LOW && touch_right == LOW) && (situation == 0 || situation == 3)){
         situation = 1;
     }
-    else if(light_sensor < 400){
+    else if(light_sensor < 430 && situation == 2){
         situation = 3;
     }
-    else if(touch_under == LOW){
+    else if(touch_under == LOW && situation == 3){
         situation = 4;
-    }
-    else if(situation != 2 && caught == 0){
-        situation = 0;
     }
     else if(caught == 1){
         situation = 4;
@@ -191,8 +209,8 @@ void loop(){
 
       // nothing happened
       case 0:
-        val_output_L = 100;
-        val_output_R = 100;
+        val_output_L = 160;
+        val_output_R = 150;
         Forward();
         break;
 
@@ -201,21 +219,21 @@ void loop(){
         val_output_L = -100;
         val_output_R = -100;
         Backward();
-        delay(2000);
+        delay(600);
         situation = 2;
         break;
 
       //just went backward from the wall, find the target
       case 2:
-        val_output_L = -60;
-        val_output_R = 60;
+        val_output_L = -100;
+        val_output_R = 100;
         Left();
         break;
 
       //there's the target !! RUSH!!!
       case 3:
-        val_output_L = 100;
-        val_output_R = 100;
+        val_output_L = 150;
+        val_output_R = 150;
         Forward();
         break;
 
@@ -226,7 +244,22 @@ void loop(){
         Stop();
         caught = 1;
         break;
+
+      default:
+        val_output_L = 0;
+        val_output_R = 0;
+        Stop();
+        caught = 1;
+        break;
     }
 
-    nh.spinOnce();
+    if(count == 1000){
+        light_value.data = light_sensor;
+        light_publisher.publish(&light_value);
+        count = 1;
+    }
+    else{
+        nh.spinOnce();
+    }
+    count++;
 }

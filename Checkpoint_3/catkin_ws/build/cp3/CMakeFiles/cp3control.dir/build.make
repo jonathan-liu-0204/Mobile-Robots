@@ -108,7 +108,6 @@ cp3control_EXTERNAL_OBJECTS =
 /home/team6/catkin_ws/devel/lib/cp3/cp3control: /usr/lib/aarch64-linux-gnu/libboost_atomic.so
 /home/team6/catkin_ws/devel/lib/cp3/cp3control: /usr/lib/aarch64-linux-gnu/libpthread.so
 /home/team6/catkin_ws/devel/lib/cp3/cp3control: /usr/lib/aarch64-linux-gnu/libconsole_bridge.so.0.4
-/home/team6/catkin_ws/devel/lib/cp3/cp3control: /usr/local/lib/libwiringPi.so
 /home/team6/catkin_ws/devel/lib/cp3/cp3control: cp3/CMakeFiles/cp3control.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/team6/catkin_ws/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable /home/team6/catkin_ws/devel/lib/cp3/cp3control"
 	cd /home/team6/catkin_ws/build/cp3 && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/cp3control.dir/link.txt --verbose=$(VERBOSE)
