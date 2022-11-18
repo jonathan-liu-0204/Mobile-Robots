@@ -3,7 +3,6 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/Empty.h>
 #include <PID_v1.h>
-#include <IRremote.h> 
 
 #define L298N_IN1   9
 #define L298N_IN2   8
@@ -45,10 +44,6 @@ boolean result_R;
 double Setpoint_L;
 double Setpoint_R;
 
-// IR
-IRrecv irrecv(RECV_PIN);     
-decode_results IR_results; 
-
 void setup(){
    //Serial.begin(9600);//Initialize the serial port
 
@@ -61,6 +56,7 @@ void setup(){
    pinMode(right_touch_pin, INPUT);
    pinMode(under_touch_pin, INPUT);
    pinMode(light_sensor_pin, INPUT);
+   pinMode(IR_pin, INPUT);
 
    Setpoint_L = 80;  //Set the output value of the PID
    Setpoint_R = 80;  
