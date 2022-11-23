@@ -150,6 +150,37 @@ void Left_negative_0(){
      analogWrite(E_right, 0);
 }
 
+int find_goal(){
+     float rate = 0.0;
+     float count_low = 0.0;
+     float count_high = 0.0;
+
+     for(int i = 0; i < 120; i++){
+          if(digitalRead(IR_pin) == 1){
+               count_high++;
+               delay(1);
+          }
+
+          if(digitalRead(IR_pin) == 0){
+               count_low++;
+               delay(1);
+          }
+     }
+
+     rate = count_low / (count_high + count_low);
+
+     if(rate > 0.27 && rate < 0.32){
+          return 600;
+     }
+     else if(rate > 0.17 && rate < 0.27){
+          return 1500;
+     }
+     else{
+          return 0;
+     }
+}
+
+
 int caught = 0;
 int situation = 0;
 int count = 1;
@@ -158,11 +189,10 @@ int count = 1;
 void loop(){
     //Serial.begin(19200);
 
-    int touch_left = digitalRead(left_touch_pin);
-    int touch_right = digitalRead(right_touch_pin);
-    int touch_under = digitalRead(under_touch_pin);
-    int light_sensor = analogRead(light_sensor_pin);
-
+     int touch_left = digitalRead(left_touch_pin);
+     int touch_right = digitalRead(right_touch_pin);
+     int touch_under = digitalRead(under_touch_pin);
+     int light_sensor = analogRead(light_sensor_pin);
 
 //    Serial.print("touch_left: ");
 //    Serial.println(touch_left);
@@ -184,8 +214,14 @@ void loop(){
     else if(touch_under == LOW && situation == 3){
         situation = 4;
     }
-    else if(caught == 1){
-        situation = 4;
+    else if(situation == 4 && find_goal() == 1500){
+        situation = 5;
+    }
+    else if((touch_left == LOW && touch_right == LOW) && situation == 5){
+        situation = 6;
+    }
+    else(done == 1){
+        situation = 7;
     }
 
     switch(situation){
@@ -220,25 +256,51 @@ void loop(){
         Forward();
         break;
 
-      //Caught the target, stop
+      //Caught the target, find the goal
       case 4:
+        val_output_L = -90;
+        val_output_R = 90;
+        Right();
+        break;
+      
+      //Found the goal, gooo!!!!
+      case 5:
+        val_output_L = 150;
+        val_output_R = 150;
+        Forward();
+        break;
+      
+      //Reached the goal, leave the ball
+      case 6:
+        val_output_L = -100;
+        val_output_R = -100;
+        Backward();
+        delay(600);
+        situation = 7;
+
+      //Goallll! Stop
+      case 7:
         val_output_L = 0;
         val_output_R = 0;
         Stop();
-        caught = 1;
+        done = 1;
         break;
 
       default:
         val_output_L = 0;
         val_output_R = 0;
         Stop();
-        caught = 1;
+        done = 1;
         break;
     }
 
     if(count == 1000){
         light_value.data = light_sensor;
         light_publisher.publish(&light_value);
+        
+        IR_value.data = find_goal();
+        IR_publisher.publish(&IR_value);
+
         count = 1;
     }
     else{
