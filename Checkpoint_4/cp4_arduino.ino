@@ -216,7 +216,7 @@ void loop(){
     else if(situation == 4 && find_goal() == 1500){
         situation = 5;
     }
-    else if((touch_left == LOW && touch_right == LOW) && situation == 5){
+    else if((touch_left == LOW || touch_right == LOW) && situation == 5){
         situation = 6;
     }
     else if(done == 1){
@@ -257,15 +257,15 @@ void loop(){
 
       //Caught the target, find the goal
       case 4:
-        val_output_L = -90;
-        val_output_R = 90;
+        val_output_L = 100;
+        val_output_R = -100;
         Right();
         break;
       
       //Found the goal, gooo!!!!
       case 5:
-        val_output_L = 150;
-        val_output_R = 150;
+        val_output_L = 110;
+        val_output_R = 110;
         Forward();
         break;
       
