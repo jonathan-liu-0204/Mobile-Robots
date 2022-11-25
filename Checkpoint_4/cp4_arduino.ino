@@ -65,8 +65,6 @@ void setup(){
    digitalWrite(L298N_IN2, LOW);      
    digitalWrite(L298N_IN3, LOW);      
    digitalWrite(L298N_IN4, LOW); 
-
-   irrecv.enableIRIn(); 
    
    nh.initNode();
    nh.advertise(light_publisher);
@@ -184,6 +182,7 @@ int find_goal(){
 int caught = 0;
 int situation = 0;
 int count = 1;
+int done = 0;
 
 
 void loop(){
@@ -220,7 +219,7 @@ void loop(){
     else if((touch_left == LOW && touch_right == LOW) && situation == 5){
         situation = 6;
     }
-    else(done == 1){
+    else if(done == 1){
         situation = 7;
     }
 
