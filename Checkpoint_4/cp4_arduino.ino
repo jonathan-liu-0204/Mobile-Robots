@@ -148,6 +148,8 @@ void Left_negative_0(){
      analogWrite(E_right, 0);
 }
 
+int which_IR = 0;
+
 int find_goal(){
      float rate = 0.0;
      float count_low = 0.0;
@@ -167,10 +169,12 @@ int find_goal(){
 
      rate = count_low / (count_high + count_low);
 
-     if(rate > 0.27 && rate < 0.32){
+     if(rate > 0.25 && rate < 0.37){
+          which_IR = 600;
           return 600;
      }
-     else if(rate > 0.17 && rate < 0.27){
+     else if(rate > 0.17 && rate < 0.22){
+          which_IR = 1500;
           return 1500;
      }
      else{
@@ -186,49 +190,52 @@ int done = 0;
 
 
 void loop(){
-    //Serial.begin(19200);
+    // Serial.begin(19200);
 
      int touch_left = digitalRead(left_touch_pin);
      int touch_right = digitalRead(right_touch_pin);
      int touch_under = digitalRead(under_touch_pin);
      int light_sensor = analogRead(light_sensor_pin);
 
-//    Serial.print("touch_left: ");
-//    Serial.println(touch_left);
-//    Serial.print("touch_right: ");
-//    Serial.println(touch_right);
+     // Serial.print("touch_left: ");
+     // Serial.println(touch_left);
+     // Serial.print("touch_right: ");
+     // Serial.println(touch_right);
 //    Serial.print("touch_under: ");
 //    Serial.println(touch_under);
 //    Serial.print("light_sensor: ");
 //    Serial.println(light_sensor);
 //
-//    delay(5)
+    //delay(5);
 
     if((touch_left == LOW && touch_right == LOW) && (situation == 0 || situation == 3)){
         situation = 1;
     }
-    else if(light_sensor < 430 && situation == 2){
+    else if(light_sensor < 600 && situation == 2){
         situation = 3;
     }
     else if(touch_under == LOW && situation == 3){
         situation = 4;
     }
-    else if(situation == 4 && find_goal() == 1500){
+    else if(situation == 4 && find_goal() == 600){
         situation = 5;
     }
-    else if((touch_left == LOW || touch_right == LOW) && situation == 5){
+    else if(situation == 4 && find_goal() == 1500){
         situation = 6;
     }
-    else if(done == 1){
+    else if((touch_left == LOW || touch_right == LOW) && situation == 6){
         situation = 7;
+    }
+    else if(done == 1){
+        situation = 8;
     }
 
     switch(situation){
 
       // nothing happened
       case 0:
-        val_output_L = 160;
-        val_output_R = 150;
+        val_output_L = 250;
+        val_output_R = 250;
         Forward();
         break;
 
@@ -250,8 +257,8 @@ void loop(){
 
       //there's the target !! RUSH!!!
       case 3:
-        val_output_L = 150;
-        val_output_R = 150;
+        val_output_L = 100;
+        val_output_R = 100;
         Forward();
         break;
 
@@ -261,24 +268,33 @@ void loop(){
         val_output_R = -100;
         Right();
         break;
+
+      //when it's IR 600, turn back a bit
+      case 5:
+        val_output_L = -120;
+        val_output_R = 120;
+        Left();
+        delay(200);
+        situation = 6;
       
       //Found the goal, gooo!!!!
-      case 5:
-        val_output_L = 110;
-        val_output_R = 110;
+      case 6:
+        val_output_L = 180;
+        val_output_R = 180;
         Forward();
         break;
       
       //Reached the goal, leave the ball
-      case 6:
-        val_output_L = -100;
-        val_output_R = -100;
+      case 7:
+        delay(800);
+        val_output_L = -120;
+        val_output_R = -120;
         Backward();
-        delay(600);
-        situation = 7;
+        delay(800);
+        situation = 8;
 
       //Goallll! Stop
-      case 7:
+      case 8:
         val_output_L = 0;
         val_output_R = 0;
         Stop();
@@ -293,7 +309,7 @@ void loop(){
         break;
     }
 
-    if(count == 1000){
+    if(count == 100){
         light_value.data = light_sensor;
         light_publisher.publish(&light_value);
         
